@@ -1,0 +1,310 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - strong [ref=e5]: TTS Stüdyo
+      - generic [ref=e6]: generateContent · stil & ifadeler · klonlanmış sesler · batch
+    - generic [ref=e8]:
+      - textbox "Gemini API key" [ref=e9]
+      - button "Sesleri yükle" [ref=e10] [cursor=pointer]
+  - main [ref=e11]:
+    - generic [ref=e12]:
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - textbox "Başlık" [ref=e15]: Yeni Seslendirme
+          - generic [ref=e16]: 0 karakter
+        - 'textbox "Metninizi buraya yazın veya yapıştırın. İfade etiketleri: <laugh> <sigh> <short pause> <whispers> Batch için parçaları --- ile ayırın (veya boş satır)." [ref=e17]':
+          - /placeholder: "Metninizi buraya yazın veya yapıştırın.\n\nİfade etiketleri: <laugh> <sigh> <short pause> <whispers>\nBatch için parçaları --- ile ayırın (veya boş satır)."
+        - generic [ref=e18]:
+          - generic [ref=e19]:
+            - generic [ref=e20]:
+              - generic [ref=e21]: Stil
+              - generic [ref=e22]: speech_metadata.style
+            - 'textbox "Örn: warm and conversational" [ref=e23]'
+            - generic [ref=e24]:
+              - button "warm and conversational" [ref=e25] [cursor=pointer]
+              - button "excited and energetic" [ref=e26] [cursor=pointer]
+              - button "calm and soothing" [ref=e27] [cursor=pointer]
+              - button "sad and reflective" [ref=e28] [cursor=pointer]
+              - button "dramatic and intense" [ref=e29] [cursor=pointer]
+              - button "whispered and intimate" [ref=e30] [cursor=pointer]
+              - button "cheerful and bright" [ref=e31] [cursor=pointer]
+              - button "serious and formal" [ref=e32] [cursor=pointer]
+              - button "playful and teasing" [ref=e33] [cursor=pointer]
+              - button "mysterious and soft" [ref=e34] [cursor=pointer]
+          - generic [ref=e35]:
+            - generic [ref=e36]:
+              - generic [ref=e37]: İfadeler & ses efektleri
+              - searchbox "Ara…" [ref=e38]
+            - generic [ref=e39]:
+              - button "<argh>" [ref=e40] [cursor=pointer]
+              - button "<breath>" [ref=e41] [cursor=pointer]
+              - button "<heavy breath>" [ref=e42] [cursor=pointer]
+              - button "<exhales>" [ref=e43] [cursor=pointer]
+              - button "<cackle>" [ref=e44] [cursor=pointer]
+              - button "<cheer>" [ref=e45] [cursor=pointer]
+              - button "<chuckle>" [ref=e46] [cursor=pointer]
+              - button "<chuckles>" [ref=e47] [cursor=pointer]
+              - button "<cough>" [ref=e48] [cursor=pointer]
+              - button "<cry>" [ref=e49] [cursor=pointer]
+              - button "<gasp>" [ref=e50] [cursor=pointer]
+              - button "<giggle>" [ref=e51] [cursor=pointer]
+              - button "<groan>" [ref=e52] [cursor=pointer]
+              - button "<growl>" [ref=e53] [cursor=pointer]
+              - button "<grunt>" [ref=e54] [cursor=pointer]
+              - button "<grr>" [ref=e55] [cursor=pointer]
+              - button "<hiss>" [ref=e56] [cursor=pointer]
+              - button "<laugh>" [ref=e57] [cursor=pointer]
+              - button "<laughter>" [ref=e58] [cursor=pointer]
+              - button "<moan>" [ref=e59] [cursor=pointer]
+              - button "<pant>" [ref=e60] [cursor=pointer]
+              - button "<pff>" [ref=e61] [cursor=pointer]
+              - button "<phew>" [ref=e62] [cursor=pointer]
+              - button "<scream>" [ref=e63] [cursor=pointer]
+              - button "<shout>" [ref=e64] [cursor=pointer]
+              - button "<shriek>" [ref=e65] [cursor=pointer]
+              - button "<sigh>" [ref=e66] [cursor=pointer]
+              - button "<sighs>" [ref=e67] [cursor=pointer]
+              - button "<sneeze>" [ref=e68] [cursor=pointer]
+              - button "<snicker>" [ref=e69] [cursor=pointer]
+              - button "<snort>" [ref=e70] [cursor=pointer]
+              - button "<sob>" [ref=e71] [cursor=pointer]
+              - button "<throat-clearing>" [ref=e72] [cursor=pointer]
+              - button "<tsk>" [ref=e73] [cursor=pointer]
+              - button "<whimper>" [ref=e74] [cursor=pointer]
+              - button "<whispers>" [ref=e75] [cursor=pointer]
+              - button "<whispering>" [ref=e76] [cursor=pointer]
+              - button "<yawn>" [ref=e77] [cursor=pointer]
+              - button "<short pause>" [ref=e78] [cursor=pointer]
+              - button "<long pause>" [ref=e79] [cursor=pointer]
+            - paragraph [ref=e80]:
+              - text: "Etiketler imlecin olduğu yere eklenir. Örn:"
+              - code [ref=e81]: <laugh>
+              - code [ref=e82]: <sigh>
+              - code [ref=e83]: <short pause>
+      - generic [ref=e84]:
+        - generic [ref=e85]:
+          - heading "Seslendirme" [level=2] [ref=e86]
+          - generic [ref=e87]: Kore
+        - generic [ref=e88]:
+          - button "Ses üret" [disabled] [ref=e89]
+          - button "Önizleme" [disabled] [ref=e90]
+          - button "Sıfırla" [ref=e91] [cursor=pointer]
+      - generic [ref=e92]:
+        - generic [ref=e93]:
+          - heading "Batch" [level=2] [ref=e94]
+          - generic [ref=e95]: 0 parça
+        - generic [ref=e96]:
+          - generic [ref=e97]:
+            - text: Ayırıcı
+            - textbox "Ayırıcı" [ref=e98]:
+              - /placeholder: "---"
+              - text: "---"
+          - generic [ref=e99]:
+            - text: Eşzamanlılık
+            - spinbutton "Eşzamanlılık" [ref=e100]: "2"
+          - button "Yerel batch (hemen)" [disabled] [ref=e101]
+          - button "API Batch (%50, ~24s)" [disabled] [ref=e102]
+        - generic [ref=e103]:
+          - strong [ref=e104]: API Batch = kuyruk.
+          - text: Gönderdikten sonra bilgisayarını kapatabilirsin — iş Google sunucularında biter (genelde 24 saat içinde, çoğu zaman daha hızlı). Sonuçlar
+          - strong [ref=e105]: 6 hafta
+          - text: saklanır. Geri geldiğinde aşağıdan
+          - strong [ref=e106]: Durum
+          - text: veya
+          - strong [ref=e107]: İndir
+          - text: demen yeterli. Sürekli istek atmana gerek yok.
+        - paragraph [ref=e108]:
+          - strong [ref=e109]: "Yerel:"
+          - text: parçaları hemen paralel üretir (sekme açık kalmalı).
+          - strong [ref=e110]: "API Batch:"
+          - text: kuyruğa atar, %50 daha ucuz. Ayırıcı boşsa paragraflara bölünür.
+        - generic [ref=e111]:
+          - generic [ref=e112]:
+            - heading "Batch işleri" [level=2] [ref=e113]
+            - button "Listeyi yenile" [disabled] [ref=e114]
+          - generic [ref=e115]: Henüz kayıtlı batch yok. API Batch gönderirsen job adı buraya kaydedilir — bilgisayı kapatsan da geri gelince bulursun.
+          - paragraph [ref=e116]:
+            - text: Job adları tarayıcıda saklanır (localStorage). Google’da sonuçlar
+            - strong [ref=e117]: 6 hafta
+            - text: durur; “Listeyi yenile” ile API’den de çekebilirsin.
+    - complementary [ref=e118]:
+      - generic [ref=e119]:
+        - generic [ref=e120]:
+          - heading "Sesler" [level=2] [ref=e121]
+          - button "Yenile" [disabled] [ref=e122]
+        - generic [ref=e123]:
+          - generic [ref=e124] [cursor=pointer]: Klon (0)
+          - generic [ref=e125] [cursor=pointer]: Tasarım (0)
+          - generic [ref=e126] [cursor=pointer]: Hazır
+        - generic [ref=e127]:
+          - button "Zephyr Bright hazır" [ref=e128] [cursor=pointer]:
+            - generic [ref=e130]:
+              - generic [ref=e131]: Zephyr
+              - generic [ref=e132]: Bright
+            - generic [ref=e133]: hazır
+          - button "Puck Upbeat hazır" [ref=e134] [cursor=pointer]:
+            - generic [ref=e136]:
+              - generic [ref=e137]: Puck
+              - generic [ref=e138]: Upbeat
+            - generic [ref=e139]: hazır
+          - button "Charon Informative hazır" [ref=e140] [cursor=pointer]:
+            - generic [ref=e142]:
+              - generic [ref=e143]: Charon
+              - generic [ref=e144]: Informative
+            - generic [ref=e145]: hazır
+          - button "Kore Firm hazır" [ref=e146] [cursor=pointer]:
+            - generic [ref=e148]:
+              - generic [ref=e149]: Kore
+              - generic [ref=e150]: Firm
+            - generic [ref=e151]: hazır
+          - button "Fenrir Excitable hazır" [ref=e152] [cursor=pointer]:
+            - generic [ref=e154]:
+              - generic [ref=e155]: Fenrir
+              - generic [ref=e156]: Excitable
+            - generic [ref=e157]: hazır
+          - button "Leda Youthful hazır" [ref=e158] [cursor=pointer]:
+            - generic [ref=e160]:
+              - generic [ref=e161]: Leda
+              - generic [ref=e162]: Youthful
+            - generic [ref=e163]: hazır
+          - button "Orus Firm hazır" [ref=e164] [cursor=pointer]:
+            - generic [ref=e166]:
+              - generic [ref=e167]: Orus
+              - generic [ref=e168]: Firm
+            - generic [ref=e169]: hazır
+          - button "Aoede Breezy hazır" [ref=e170] [cursor=pointer]:
+            - generic [ref=e172]:
+              - generic [ref=e173]: Aoede
+              - generic [ref=e174]: Breezy
+            - generic [ref=e175]: hazır
+          - button "Callirrhoe Easy-going hazır" [ref=e176] [cursor=pointer]:
+            - generic [ref=e178]:
+              - generic [ref=e179]: Callirrhoe
+              - generic [ref=e180]: Easy-going
+            - generic [ref=e181]: hazır
+          - button "Autonoe Bright hazır" [ref=e182] [cursor=pointer]:
+            - generic [ref=e184]:
+              - generic [ref=e185]: Autonoe
+              - generic [ref=e186]: Bright
+            - generic [ref=e187]: hazır
+          - button "Enceladus Breathy hazır" [ref=e188] [cursor=pointer]:
+            - generic [ref=e190]:
+              - generic [ref=e191]: Enceladus
+              - generic [ref=e192]: Breathy
+            - generic [ref=e193]: hazır
+          - button "Iapetus Clear hazır" [ref=e194] [cursor=pointer]:
+            - generic [ref=e196]:
+              - generic [ref=e197]: Iapetus
+              - generic [ref=e198]: Clear
+            - generic [ref=e199]: hazır
+          - button "Umbriel Easy-going hazır" [ref=e200] [cursor=pointer]:
+            - generic [ref=e202]:
+              - generic [ref=e203]: Umbriel
+              - generic [ref=e204]: Easy-going
+            - generic [ref=e205]: hazır
+          - button "Algieba Smooth hazır" [ref=e206] [cursor=pointer]:
+            - generic [ref=e208]:
+              - generic [ref=e209]: Algieba
+              - generic [ref=e210]: Smooth
+            - generic [ref=e211]: hazır
+          - button "Despina Smooth hazır" [ref=e212] [cursor=pointer]:
+            - generic [ref=e214]:
+              - generic [ref=e215]: Despina
+              - generic [ref=e216]: Smooth
+            - generic [ref=e217]: hazır
+          - button "Erinome Clear hazır" [ref=e218] [cursor=pointer]:
+            - generic [ref=e220]:
+              - generic [ref=e221]: Erinome
+              - generic [ref=e222]: Clear
+            - generic [ref=e223]: hazır
+          - button "Algenib Gravelly hazır" [ref=e224] [cursor=pointer]:
+            - generic [ref=e226]:
+              - generic [ref=e227]: Algenib
+              - generic [ref=e228]: Gravelly
+            - generic [ref=e229]: hazır
+          - button "Rasalgethi Informative hazır" [ref=e230] [cursor=pointer]:
+            - generic [ref=e232]:
+              - generic [ref=e233]: Rasalgethi
+              - generic [ref=e234]: Informative
+            - generic [ref=e235]: hazır
+          - button "Laomedeia Upbeat hazır" [ref=e236] [cursor=pointer]:
+            - generic [ref=e238]:
+              - generic [ref=e239]: Laomedeia
+              - generic [ref=e240]: Upbeat
+            - generic [ref=e241]: hazır
+          - button "Achernar Soft hazır" [ref=e242] [cursor=pointer]:
+            - generic [ref=e244]:
+              - generic [ref=e245]: Achernar
+              - generic [ref=e246]: Soft
+            - generic [ref=e247]: hazır
+          - button "Alnilam Firm hazır" [ref=e248] [cursor=pointer]:
+            - generic [ref=e250]:
+              - generic [ref=e251]: Alnilam
+              - generic [ref=e252]: Firm
+            - generic [ref=e253]: hazır
+          - button "Schedar Even hazır" [ref=e254] [cursor=pointer]:
+            - generic [ref=e256]:
+              - generic [ref=e257]: Schedar
+              - generic [ref=e258]: Even
+            - generic [ref=e259]: hazır
+          - button "Gacrux Mature hazır" [ref=e260] [cursor=pointer]:
+            - generic [ref=e262]:
+              - generic [ref=e263]: Gacrux
+              - generic [ref=e264]: Mature
+            - generic [ref=e265]: hazır
+          - button "Pulcherrima Forward hazır" [ref=e266] [cursor=pointer]:
+            - generic [ref=e268]:
+              - generic [ref=e269]: Pulcherrima
+              - generic [ref=e270]: Forward
+            - generic [ref=e271]: hazır
+          - button "Achird Friendly hazır" [ref=e272] [cursor=pointer]:
+            - generic [ref=e274]:
+              - generic [ref=e275]: Achird
+              - generic [ref=e276]: Friendly
+            - generic [ref=e277]: hazır
+          - button "Zubenelgenubi Casual hazır" [ref=e278] [cursor=pointer]:
+            - generic [ref=e280]:
+              - generic [ref=e281]: Zubenelgenubi
+              - generic [ref=e282]: Casual
+            - generic [ref=e283]: hazır
+          - button "Vindemiatrix Gentle hazır" [ref=e284] [cursor=pointer]:
+            - generic [ref=e286]:
+              - generic [ref=e287]: Vindemiatrix
+              - generic [ref=e288]: Gentle
+            - generic [ref=e289]: hazır
+          - button "Sadachbia Lively hazır" [ref=e290] [cursor=pointer]:
+            - generic [ref=e292]:
+              - generic [ref=e293]: Sadachbia
+              - generic [ref=e294]: Lively
+            - generic [ref=e295]: hazır
+          - button "Sadaltager Knowledgeable hazır" [ref=e296] [cursor=pointer]:
+            - generic [ref=e298]:
+              - generic [ref=e299]: Sadaltager
+              - generic [ref=e300]: Knowledgeable
+            - generic [ref=e301]: hazır
+          - button "Sulafat Warm hazır" [ref=e302] [cursor=pointer]:
+            - generic [ref=e304]:
+              - generic [ref=e305]: Sulafat
+              - generic [ref=e306]: Warm
+            - generic [ref=e307]: hazır
+        - paragraph [ref=e308]:
+          - strong [ref=e309]: Klon
+          - text: = Voice Replication ·
+          - strong [ref=e310]: Tasarım
+          - text: = Voice Design (
+          - code [ref=e311]: prompted
+          - text: ). Yeni ses üretimi bu arayüzde yok; AI Studio’da tasarladığınız
+          - code [ref=e312]: voice_…
+          - text: kimlikleri burada listelenir.
+      - generic [ref=e313]:
+        - generic [ref=e314]:
+          - heading "Yasal uyarı" [level=2] [ref=e315]
+          - button ".txt indir" [ref=e316] [cursor=pointer]
+        - textbox "Telif / kullanım uyarısı" [ref=e317]: ÖNEMLİ UYARI Bu video NİSAN KUMRU tarafından Youtube'da ÇANTADA KİTAP kanalı için seslendirilmiştir. Başka bir kanalda video olarak veya ses olarak yayımlanamaz. Buradaki seslendirme, üzerine klonlanmış bir ses giydirerek (yapay zekâ ile yeniden üretilerek) başka bir kanalda yayımlanamaz. Tespiti halinde ihlal bildirim gönderilir.
+        - paragraph [ref=e318]: Bu metin projenizle saklanır. Video açıklamasına veya seslendirme notlarına eklemek için indirin.
+      - generic [ref=e319]:
+        - heading "İpucu" [level=2] [ref=e321]
+        - paragraph [ref=e322]:
+          - text: Metni serbest yazın. Stil alanına duygu/yöntem yazın, ifade etiketlerini imleçle metne yerleştirin. Batch için
+          - code [ref=e323]: "---"
+          - text: "ile parçalara ayırın: yerel kuyruk hemen üretir, API Batch ise %50 maliyetle kuyruğa alır."

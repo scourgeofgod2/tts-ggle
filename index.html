@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TTS Stüdyo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  </head>
+  <body>
+    <div x-data="studio" x-init="init()" @keydown.window="persist()">
+      <header class="app-header">
+        <div class="brand">
+          <strong>TTS Stüdyo</strong>
+          <span>generateContent · stil &amp; ifadeler · klonlanmış sesler · batch</span>
+        </div>
+        <div class="header-actions">
+          <div class="api-field">
+            <input
+              type="password"
+              placeholder="Gemini API key"
+              x-model="apiKey"
+              @change="persist(); loadVoices()"
+              @keydown.enter="persist(); loadVoices()"
+            />
+            <button class="ghost" @click="persist(); loadVoices()" :disabled="voicesLoading">
+              <span x-show="!voicesLoading">Sesleri yükle</span>
+              <span x-show="voicesLoading">Yükleniyor…</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main class="layout">
+        <!-- Sol: metin + stil + ifadeler + batch -->
+        <div class="stack">
+          <section class="panel">
+            <div class="title-row">
+              <input
+                type="text"
+                x-model="title"
+                @change="persist()"
+                placeholder="Başlık"
+                aria-label="Başlık"
+              />
+              <span class="char-count" x-text="text.length + ' karakter'"></span>
+            </div>
+
+            <textarea
+              id="script-text"
+              x-model="text"
+              @focus="onTextFocus($event)"
+              @click="onTextFocus($event)"
+              @keyup="onTextFocus($event)"
+              @change="persist()"
+              placeholder="Metninizi buraya yazın veya yapıştırın.
+
+İfade etiketleri: <laugh> <sigh> <short pause> <whispers>
+Batch için parçaları --- ile ayırın (veya boş satır)."
+            ></textarea>
+
+            <div class="toolbar">
+              <div class="toolbar-section">
+                <div class="toolbar-label">
+                  <span>Model</span>
+                  <span class="char-count" style="text-transform: none; letter-spacing: 0">
+                    generateContent
+                  </span>
+                </div>
+                <select x-model="model" @change="persist()" aria-label="TTS modeli">
+                  <template x-for="m in models" :key="m.id">
+                    <option :value="m.id" x-text="m.label"></option>
+                  </template>
+                </select>
+                <p class="hint" style="margin: 0.55rem 0 0">
+                  Flash daha zengin ifade (ses gideri $9/1M token).
+                  Flash-Lite daha ucuz (ses gideri $6/1M token).
+                </p>
+              </div>
+
+              <div class="toolbar-section">
+                <div class="toolbar-label">
+                  <span>Stil</span>
+                  <span class="char-count" style="text-transform: none; letter-spacing: 0">
+                    speech_metadata.style
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  x-model="style"
+                  @change="persist()"
+                  placeholder="Örn: warm and conversational"
+                />
+                <div class="chips" style="margin-top: 0.55rem">
+                  <template x-for="s in [
+                    'warm and conversational',
+                    'excited and energetic',
+                    'calm and soothing',
+                    'sad and reflective',
+                    'dramatic and intense',
+                    'whispered and intimate',
+                    'cheerful and bright',
+                    'serious and formal',
+                    'playful and teasing',
+                    'mysterious and soft'
+                  ]" :key="s">
+                    <button
+                      type="button"
+                      class="chip"
+                      :class="{ active: style === s }"
+                      @click="insertStyle(s)"
+                      x-text="s"
+                    ></button>
+                  </template>
+                </div>
+              </div>
+
+              <div class="toolbar-section">
+                <div class="toolbar-label">
+                  <span>İfadeler &amp; ses efektleri</span>
+                  <input class="tag-search" type="search" placeholder="Ara…" x-model="tagSearch" />
+                </div>
+                <div class="chips">
+                  <template x-for="t in filteredTags" :key="t">
+                    <button type="button" class="tag-chip" @click="insertTag(t)" x-text="'<' + t + '>'"></button>
+                  </template>
+                </div>
+                <p class="hint" style="margin: 0.55rem 0 0">
+                  Etiketler imlecin olduğu yere eklenir. Örn:
+                  <code>&lt;laugh&gt;</code> <code>&lt;sigh&gt;</code>
+                  <code>&lt;short pause&gt;</code>
+                </p>
+              </div>
+
+              <div x-show="tagWarnings.length > 0" class="warn-text" x-text="tagWarnings.join(' · ')"></div>
+            </div>
+          </section>
+
+          <!-- Anlık üretim -->
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Seslendirme</h2>
+              <span class="sub" x-show="selectedVoice" x-text="selectedVoice ? selectedVoice.displayName : ''"></span>
+            </div>
+
+            <div class="row">
+              <button class="primary" @click="generate()" :disabled="!canGenerate" x-text="generating ? 'Üretiliyor…' : 'Ses üret'"></button>
+              <button @click="preview()" :disabled="generating || !apiKey || !voiceId">Önizleme</button>
+              <button class="danger" x-show="generating" @click="cancel()">İptal</button>
+              <div class="grow"></div>
+              <button class="ghost" @click="reset()">Sıfırla</button>
+            </div>
+
+            <div class="progress-track" x-show="generating || progress > 0">
+              <div class="progress-fill" :style="'width: ' + progress + '%'"></div>
+            </div>
+            <p class="hint" x-show="progressLabel" style="margin: 0.35rem 0 0" x-text="progressLabel"></p>
+            <p class="error-text" x-show="error" x-text="error"></p>
+
+            <div class="audio-box" x-show="audioUrl">
+              <div class="row">
+                <span class="pill ok">Hazır</span>
+                <span class="char-count" x-text="durationSec.toFixed(1) + ' sn'"></span>
+              </div>
+              <div class="ap" x-data="audioPlayer" x-effect="setSrc(audioUrl); setFileName(fileBase + '.wav')">
+                <audio
+                  class="ap-audio"
+                  x-ref="audio"
+                  preload="metadata"
+                  :src="src"
+                  @play="onPlay()"
+                  @pause="onPause()"
+                  @ended="onEnded()"
+                  @timeupdate="onTimeUpdate()"
+                  @loadedmetadata="onLoaded()"
+                ></audio>
+                <button type="button" class="ap-play" @click="toggle()" :aria-label="playing ? 'Duraklat' : 'Oynat'" :aria-pressed="playing">
+                  <svg x-show="!playing" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                  <svg x-show="playing" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>
+                </button>
+                <span class="ap-time" x-text="fmt(current)"></span>
+                <input
+                  class="ap-seek"
+                  type="range"
+                  min="0"
+                  max="1000"
+                  step="1"
+                  :value="seekValue"
+                  :disabled="!duration"
+                  aria-label="Konum"
+                  @input="seekFromInput($event)"
+                  @change="onSeekEnd()"
+                  @pointerup="onSeekEnd()"
+                  @pointercancel="onSeekEnd()"
+                />
+                <span class="ap-time" x-text="fmt(duration)"></span>
+                <button type="button" class="ap-dl" @click="download()" aria-label="WAV indir" title="WAV indir">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 4v12m0 0l-4-4m4 4l4-4M5 19h14"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="cost-card" x-show="text.trim().length > 0">
+              <div class="cost-title">Maliyet (2026)</div>
+              <div class="cost-row">
+                <span class="cost-label">Tahmini süre</span>
+                <span class="cost-value" x-text="fmtTime(textCost.durationSec)"></span>
+              </div>
+              <div class="cost-row">
+                <span class="cost-label">Giriş (metin)</span>
+                <span class="cost-value" x-text="textCost.inputTokens + ' token · ' + fmtTry(textCost.inputUsd)"></span>
+              </div>
+              <div class="cost-row">
+                <span class="cost-label">Standart</span>
+                <span class="cost-value" x-text="'~' + fmtTry(textCost.standardUsd)"></span>
+              </div>
+              <div class="cost-row">
+                <span class="cost-label">API Batch (%50)</span>
+                <span class="cost-value batch" x-text="'~' + fmtTry(textCost.batchUsd)"></span>
+              </div>
+              <template x-if="textActualCost">
+                <div>
+                  <hr class="cost-divider" />
+                  <div class="cost-row">
+                    <span class="cost-label">Gerçek süre</span>
+                    <span class="cost-value" x-text="textActualCost.durationSec.toFixed(1) + ' sn'"></span>
+                  </div>
+                  <div class="cost-row">
+                    <span class="cost-label">Giriş (metin)</span>
+                    <span class="cost-value" x-text="textActualCost.inputTokens + ' token · ' + fmtTry(textActualCost.inputUsd)"></span>
+                  </div>
+                  <div class="cost-row">
+                    <span class="cost-label">Standart (gerçek)</span>
+                    <span class="cost-value" x-text="fmtTry(textActualCost.standardUsd)"></span>
+                  </div>
+                  <div class="cost-row">
+                    <span class="cost-label">API Batch (%50)</span>
+                    <span class="cost-value batch" x-text="fmtTry(textActualCost.batchUsd)"></span>
+                  </div>
+                </div>
+              </template>
+              <p class="hint" style="margin: 0.45rem 0 0">
+                Tahmin: ~14 karakter/sn Türkçe konuşma. Seçili model:
+                <span x-text="model === 'gemini-3.8-flash-tts' ? 'Gemini 3.8 Flash TTS · ses $9/1M' : 'Gemini 3.8 Flash-Lite TTS · ses $6/1M'"></span>.
+                1 $ = 49 ₺. %50 indirim API Batch içindir.
+              </p>
+            </div>
+          </section>
+
+          <!-- Batch -->
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Batch</h2>
+              <span class="sub">
+                <span x-text="batchItems.length + ' parça'"></span>
+              </span>
+            </div>
+
+            <div class="row" style="margin-bottom: 0.75rem">
+              <label style="margin: 0; width: auto">
+                Ayırıcı
+                <input
+                  style="margin-top: 0.25rem; width: 100px"
+                  x-model="batchSeparator"
+                  @change="persist()"
+                  placeholder="---"
+                />
+              </label>
+              <label style="margin: 0; width: auto">
+                Eşzamanlılık
+                <input
+                  type="number"
+                  min="1"
+                  max="4"
+                  style="margin-top: 0.25rem; width: 80px"
+                  x-model.number="batchConcurrency"
+                />
+              </label>
+              <div class="grow"></div>
+              <button
+                class="primary"
+                @click="runBatchLocal()"
+                :disabled="batchRunning || !canGenerate"
+                x-text="batchRunning ? 'Çalışıyor…' : 'Yerel batch (hemen)'"
+              ></button>
+              <button @click="submitBatchApi()" :disabled="batchRunning || !canGenerate">
+                API Batch (%50, ~24s)
+              </button>
+            </div>
+
+            <div class="section-note ok" style="margin-bottom: 0.75rem">
+              <strong>API Batch = kuyruk.</strong> Gönderdikten sonra bilgisayarını
+              kapatabilirsin — iş Google sunucularında biter (genelde 24 saat içinde,
+              çoğu zaman daha hızlı). Sonuçlar <strong>6 hafta</strong> saklanır.
+              Geri geldiğinde aşağıdan <strong>Durum</strong> veya <strong>İndir</strong>
+              demen yeterli. Sürekli istek atmana gerek yok.
+            </div>
+
+            <p class="hint" style="margin: 0 0 0.75rem">
+              <strong>Yerel:</strong> parçaları hemen paralel üretir (sekme açık kalmalı).
+              <strong>API Batch:</strong> kuyruğa atar, %50 daha ucuz. Ayırıcı boşsa
+              paragraflara bölünür.
+            </p>
+
+            <div class="progress-track" x-show="batchRunning || batchProgress > 0">
+              <div class="progress-fill" :style="'width: ' + batchProgress + '%'"></div>
+            </div>
+            <p class="hint" x-show="batchLabel" style="margin: 0.35rem 0 0.75rem" x-text="batchLabel"></p>
+
+            <div class="row" x-show="batchJobName" style="margin-bottom: 0.75rem">
+              <span class="pill" x-text="batchState || '…'"></span>
+              <code class="hint" style="max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap" x-text="batchJobName"></code>
+              <button @click="checkBatchOnce()" :disabled="batchListLoading">Durum</button>
+              <button x-show="!batchPolling" class="ghost" @click="watchBatch()">İzle (30sn)</button>
+              <button x-show="batchPolling" class="ghost" @click="stopWatchBatch()">İzlemeyi durdur</button>
+              <button class="danger" @click="cancelBatchApi()">İptal</button>
+            </div>
+
+            <!-- Parça önizleme -->
+            <div x-show="batchItems.length > 0 && batchResults.length === 0" class="empty" style="text-align: left; padding: 0.5rem 0">
+              <strong>Parçalar:</strong>
+              <template x-for="it in batchItems.slice(0, 8)" :key="it.key">
+                <div class="hint" style="margin: 0.25rem 0">
+                  <span class="pill" style="font-size: 0.7rem" x-text="it.key"></span>
+                  <span x-text="it.label"></span>
+                </div>
+              </template>
+              <div class="hint" x-show="batchItems.length > 8">… ve <span x-text="batchItems.length - 8"></span> parça daha</div>
+            </div>
+
+            <!-- Sonuçlar -->
+            <div x-show="batchResults.length > 0" class="voice-list" style="max-height: none">
+              <template x-for="item in batchResults" :key="item.key">
+                <div class="audio-box" style="margin-top: 0.55rem">
+                  <div class="row">
+                    <span class="pill" :class="item.error ? 'warn' : 'ok'" x-text="item.key"></span>
+                    <span class="char-count" x-text="item.label"></span>
+                    <div class="grow"></div>
+                    <span class="char-count" x-show="!item.error" x-text="item.durationSec.toFixed(1) + ' sn'"></span>
+                  </div>
+                  <p class="error-text" x-show="item.error" x-text="item.error"></p>
+                  <div
+                    class="ap"
+                    x-data="audioPlayer"
+                    x-show="!item.error && item.audioUrl"
+                    x-effect="setSrc(item.audioUrl); setFileName(fileBase + '_' + (item.key || 'parca') + '.wav')"
+                  >
+                    <audio
+                      class="ap-audio"
+                      x-ref="audio"
+                      preload="metadata"
+                      :src="src"
+                      @play="onPlay()"
+                      @pause="onPause()"
+                      @ended="onEnded()"
+                      @timeupdate="onTimeUpdate()"
+                      @loadedmetadata="onLoaded()"
+                    ></audio>
+                    <button type="button" class="ap-play" @click="toggle()" :aria-label="playing ? 'Duraklat' : 'Oynat'" :aria-pressed="playing">
+                      <svg x-show="!playing" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                      <svg x-show="playing" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>
+                    </button>
+                    <span class="ap-time" x-text="fmt(current)"></span>
+                    <input
+                      class="ap-seek"
+                      type="range"
+                      min="0"
+                      max="1000"
+                      step="1"
+                      :value="seekValue"
+                      :disabled="!duration"
+                      aria-label="Konum"
+                      @input="seekFromInput($event)"
+                      @change="onSeekEnd()"
+                      @pointerup="onSeekEnd()"
+                      @pointercancel="onSeekEnd()"
+                    />
+                    <span class="ap-time" x-text="fmt(duration)"></span>
+                    <button type="button" class="ap-dl" @click="download()" aria-label="WAV indir" title="WAV indir">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 4v12m0 0l-4-4m4 4l4-4M5 19h14"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </template>
+            </div>
+
+            <!-- Batch maliyet özeti -->
+            <div class="cost-card" x-show="batchItems.length > 0">
+              <div class="cost-title">Batch maliyeti (2026)</div>
+              <div class="cost-row">
+                <span class="cost-label">Parça</span>
+                <span class="cost-value" x-text="batchResults.length > 0 ? (batchResults.filter(r => !r.error).length + ' / ' + batchResults.length + ' başarılı') : (batchItems.length + ' parça')"></span>
+              </div>
+              <div class="cost-row">
+                <span class="cost-label">Tahmini süre</span>
+                <span class="cost-value" x-text="fmtTime(batchEstCost.durationSec)"></span>
+              </div>
+              <div class="cost-row">
+                <span class="cost-label">Tahmini Standart</span>
+                <span class="cost-value" x-text="'~' + fmtTry(batchEstCost.standardUsd)"></span>
+              </div>
+              <div class="cost-row">
+                <span class="cost-label">Tahmini API Batch</span>
+                <span class="cost-value batch" x-text="'~' + fmtTry(batchEstCost.batchUsd)"></span>
+              </div>
+              <template x-if="batchActualCost">
+                <div>
+                  <hr class="cost-divider" />
+                  <div class="cost-row">
+                    <span class="cost-label">Gerçek süre (toplam)</span>
+                    <span class="cost-value" x-text="batchActualCost.durationSec.toFixed(1) + ' sn'"></span>
+                  </div>
+                  <div class="cost-row">
+                    <span class="cost-label">Gerçek Standart</span>
+                    <span class="cost-value" x-text="fmtTry(batchActualCost.standardUsd)"></span>
+                  </div>
+                  <div class="cost-row">
+                    <span class="cost-label">Gerçek API Batch</span>
+                    <span class="cost-value batch" x-text="fmtTry(batchActualCost.batchUsd)"></span>
+                  </div>
+                </div>
+              </template>
+              <p class="hint" style="margin: 0.45rem 0 0">
+                Yerel batch gerçek faturada standart fiyattır; %50 indirim API Batch içindir. 1 $ = 49 ₺.
+              </p>
+            </div>
+
+            <!-- Uzak / kayıtlı job listesi -->
+            <div style="margin-top: 1rem">
+              <div class="panel-head" style="margin-bottom: 0.55rem">
+                <h2 style="font-size: 0.85rem">Batch işleri</h2>
+                <span class="sub" x-show="batchListLoading">Yükleniyor…</span>
+                <button class="ghost" @click="refreshBatches()" :disabled="!apiKey || batchListLoading">
+                  Listeyi yenile
+                </button>
+              </div>
+
+              <div class="section-note" x-show="remoteBatches.length === 0 && !batchListLoading">
+                Henüz kayıtlı batch yok. API Batch gönderirsen job adı buraya kaydedilir —
+                bilgisayı kapatsan da geri gelince bulursun.
+              </div>
+
+              <div class="voice-list" x-show="remoteBatches.length > 0" style="max-height: 280px">
+                <template x-for="b in remoteBatches" :key="b.name">
+                  <div class="voice-item" style="cursor: default">
+                    <span
+                      class="dot"
+                      :style="b.state === 'JOB_STATE_SUCCEEDED' ? 'background: var(--ok)' : b.state === 'JOB_STATE_FAILED' ? 'background: var(--danger)' : ''"
+                    ></span>
+                    <span class="meta">
+                      <div class="name" x-text="b.displayName || b.name"></div>
+                      <div class="desc">
+                        <span x-text="b.state.replace('JOB_STATE_', '')"></span>
+                        <span x-show="b.requestCount"> · <span x-text="b.requestCount"></span> istek</span>
+                        <span
+                          x-show="savedJobs.find(s => s.name === b.name)"
+                          x-text="' · ' + formatJobTime((savedJobs.find(s => s.name === b.name) || {}).submittedAt || 0)"
+                        ></span>
+                      </div>
+                    </span>
+                    <button class="ghost" @click="checkBatchOnce(b.name)" :disabled="batchListLoading" title="Durumu sorgula">
+                      Durum
+                    </button>
+                    <button
+                      class="ghost"
+                      @click="downloadBatchJob(b.name)"
+                      x-show="b.state === 'JOB_STATE_SUCCEEDED'"
+                      title="Sonuçları indir"
+                    >
+                      İndir
+                    </button>
+                    <button class="ghost" @click="forgetSavedJob(b.name)" title="Listeden kaldır">
+                      ✕
+                    </button>
+                  </div>
+                </template>
+              </div>
+
+              <p class="hint" style="margin: 0.65rem 0 0">
+                Job adları tarayıcıda saklanır (localStorage). Google’da sonuçlar
+                <strong>6 hafta</strong> durur; “Listeyi yenile” ile API’den de
+                çekebilirsin.
+              </p>
+            </div>
+          </section>
+        </div>
+
+        <!-- Sağ: sesler + yasal -->
+        <aside class="stack">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Sesler</h2>
+              <button class="ghost" @click="loadVoices()" :disabled="voicesLoading || !apiKey">Yenile</button>
+            </div>
+
+            <div class="chips" style="margin-bottom: 0.85rem">
+              <label class="chip" :class="{ active: showCloned }" style="cursor: pointer">
+                <input type="checkbox" x-model="showCloned" @change="persist()" style="display: none" />
+                Klon <span x-text="'(' + clonedVoices.length + ')'"></span>
+              </label>
+              <label class="chip" :class="{ active: showDesigned }" style="cursor: pointer">
+                <input type="checkbox" x-model="showDesigned" @change="persist()" style="display: none" />
+                Tasarım <span x-text="'(' + designedVoices.length + ')'"></span>
+              </label>
+              <label class="chip" :class="{ active: showPrebuilt }" style="cursor: pointer">
+                <input type="checkbox" x-model="showPrebuilt" @change="persist()" style="display: none" />
+                Hazır
+              </label>
+            </div>
+
+            <div class="section-note" x-show="voicesError" x-text="voicesError"></div>
+            <div class="section-note ok" x-show="customVoices.length > 0 && !voicesError">
+              <span x-text="clonedVoices.length + ' klon · ' + designedVoices.length + ' tasarım yüklendi.'"></span>
+            </div>
+
+            <div class="empty" x-show="voicesLoading">Sesler yükleniyor…</div>
+
+            <div class="voice-list" x-show="!voicesLoading">
+              <template x-for="v in allVoices" :key="v.id">
+                <button type="button" class="voice-item" :class="{ active: voiceId === v.id }" @click="voiceId = v.id; persist()">
+                  <span class="dot"></span>
+                  <span class="meta">
+                    <div class="name" x-text="v.displayName"></div>
+                    <div class="desc" x-text="v.description || v.id"></div>
+                  </span>
+                  <span
+                    class="badge"
+                    :class="v.type === 'replicated' ? 'cloned' : v.type === 'prompted' ? 'cloned' : 'prebuilt'"
+                    x-text="voiceBadge(v.type)"
+                  ></span>
+                </button>
+              </template>
+
+              <div class="empty" x-show="allVoices.length === 0">
+                Ses bulunamadı. API key girip “Sesleri yükle”ye basın.
+              </div>
+            </div>
+
+            <p class="hint" style="margin: 0.85rem 0 0">
+              <strong>Klon</strong> = Voice Replication ·
+              <strong>Tasarım</strong> = Voice Design (<code>prompted</code>).
+              Yeni ses üretimi bu arayüzde yok; AI Studio’da tasarladığınız
+              <code>voice_…</code> kimlikleri burada listelenir.
+            </p>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>Yasal uyarı</h2>
+              <button class="ghost" @click="downloadDisclaimer()">.txt indir</button>
+            </div>
+            <textarea
+              x-model="disclaimer"
+              @change="persist()"
+              style="min-height: 140px; font-size: 0.82rem"
+              placeholder="Telif / kullanım uyarısı"
+            ></textarea>
+            <p class="hint" style="margin: 0.55rem 0 0">
+              Bu metin projenizle saklanır. Video açıklamasına veya seslendirme
+              notlarına eklemek için indirin.
+            </p>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>İpucu</h2>
+            </div>
+            <p class="hint" style="margin: 0">
+              Metni serbest yazın. Stil alanına duygu/yöntem yazın, ifade
+              etiketlerini imleçle metne yerleştirin. Batch için
+              <code>---</code> ile parçalara ayırın: yerel kuyruk hemen üretir,
+              API Batch ise %50 maliyetle kuyruğa alır.
+            </p>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <script type="module" src="/src/app.ts"></script>
+  </body>
+</html>
